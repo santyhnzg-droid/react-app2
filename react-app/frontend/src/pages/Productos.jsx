@@ -1,4 +1,4 @@
-import {
+﻿import {
   useEffect,
   useState,
 } from "react";
@@ -13,15 +13,17 @@ import {
 
 import {
   getProductos,
-  registrarVenta,
+  crearStripeCheckoutCarrito,
 } from "../services/api";
 
 import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Cart } from "../components/Cart/Cart";
 
 import logo from "../assets/images/logo.png";
 
 const BACKEND_URL =
-  "http://localhost:3000";
+  "http://127.0.0.1:8000";
 
 function getImageUrl(
   imagen
@@ -46,6 +48,7 @@ function getImageUrl(
 
 export function Productos() {
   const { usuario } = useAuth();
+  const navigate = useNavigate();
   const [
     productos,
     setProductos,
@@ -122,7 +125,7 @@ export function Productos() {
 
   const confirmarCompra = async () => {
     if (!usuario) {
-      setMensajeCompra("Inicia sesión para comprar productos.");
+      navigate("/login");
       return;
     }
 
@@ -132,26 +135,14 @@ export function Productos() {
       setComprando(true);
       setError("");
 
-      const data = await registrarVenta(
+      const data = await crearStripeCheckoutCarrito(
         carrito.map((item) => ({
           producto_id: item.id,
           cantidad: item.cantidad,
         }))
       );
 
-      setMensajeCompra(
-        `${data.message} Número de compra: #${data.venta.id}.`
-      );
-      setCarrito([]);
-
-      const refreshed = await getProductos();
-      setProductos(
-        Array.isArray(refreshed.productos)
-          ? refreshed.productos.filter(
-              (producto) => producto.estado === "activo"
-            )
-          : []
-      );
+      window.location.href = data.checkout_url;
     } catch (err) {
       setError(err.message);
     } finally {
@@ -252,7 +243,6 @@ export function Productos() {
             </div>
           )}
 
-        <div className="grid gap-10 xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start">
         <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
 
           {productos.map(
@@ -370,100 +360,15 @@ export function Productos() {
 
         </section>
 
-        <aside className="h-fit rounded-3xl border border-white/10 bg-white/[0.035] p-6 xl:sticky xl:top-8">
-          <div className="flex items-center justify-between border-b border-white/10 pb-5">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300/60">
-                Tu pedido
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">Carrito</h2>
-            </div>
-            <span className="flex h-9 min-w-9 items-center justify-center rounded-full bg-violet-400/10 px-2 text-sm text-violet-200">
-              {carrito.reduce((total, item) => total + item.cantidad, 0)}
-            </span>
-          </div>
-
-          <div className="my-5 space-y-3">
-            {carrito.length === 0 ? (
-              <p className="rounded-2xl border border-dashed border-white/10 px-4 py-8 text-center text-sm text-white/35">
-                Agrega un juego para comenzar tu compra.
-              </p>
-            ) : (
-              carrito.map((item) => (
-                <div
-                  key={item.id}
-                  className="rounded-2xl border border-white/10 bg-white/3 p-3"
-                >
-                  <div className="flex justify-between gap-3">
-                    <span className="text-sm text-white/85">
-                      {item.nombre}
-                    </span>
-                    <span className="text-sm text-cyan-200">
-                      $
-                      {Number(item.precio * item.cantidad).toLocaleString(
-                        "es-CO"
-                      )}
-                    </span>
-                  </div>
-
-                  <div className="mt-3 flex items-center justify-between text-xs text-white/40">
-                    <span>Unidades</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => cambiarCantidad(item.id, item.cantidad - 1)}
-                        className="h-7 w-7 rounded-lg border border-white/10 text-white/70 hover:border-cyan-300/30"
-                      >
-                        -
-                      </button>
-                      <span className="w-5 text-center text-white">
-                        {item.cantidad}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => cambiarCantidad(item.id, item.cantidad + 1)}
-                        className="h-7 w-7 rounded-lg border border-white/10 text-white/70 hover:border-cyan-300/30"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-
-          <div className="border-t border-white/10 pt-5">
-            <div className="flex items-end justify-between">
-              <span className="text-sm text-white/40">Total</span>
-              <strong className="text-2xl">
-                ${totalCarrito.toLocaleString("es-CO")}
-              </strong>
-            </div>
-
-            <button
-              type="button"
-              disabled={carrito.length === 0 || comprando}
-              onClick={confirmarCompra}
-              className="mt-5 w-full rounded-xl border border-emerald-300/30 bg-emerald-400/10 px-4 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:cursor-not-allowed disabled:opacity-35"
-            >
-              {comprando ? "Procesando compra..." : "Comprar ahora"}
-            </button>
-
-            {!usuario && (
-              <p className="mt-3 text-center text-xs text-white/35">
-                Debes iniciar sesión para finalizar la compra.
-              </p>
-            )}
-
-            {mensajeCompra && (
-              <p className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-400/5 p-3 text-xs text-emerald-300">
-                {mensajeCompra}
-              </p>
-            )}
-          </div>
-        </aside>
-        </div>
+        <Cart
+          items={carrito}
+          total={totalCarrito}
+          loading={comprando}
+          authenticated={Boolean(usuario)}
+          message={mensajeCompra}
+          onChangeQuantity={cambiarCantidad}
+          onCheckout={confirmarCompra}
+        />
 
       </main>
 

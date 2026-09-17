@@ -1,4 +1,4 @@
-import {
+﻿import {
   BrowserRouter,
   Navigate,
   Route,
@@ -12,6 +12,8 @@ import { Contacto } from "./pages/Contacto";
 import { Login } from "./pages/Login";
 import { RecoverPassword } from "./pages/RecoverPassword";
 import { ProductoDetalle } from "./pages/ProductoDetalle";
+import { CheckoutSuccess } from "./pages/CheckoutSuccess";
+import { CheckoutCancel } from "./pages/CheckoutCancel";
 
 import { AdminDashboard } from "./pages/admin/Dashboard";
 import { ProductosAdmin } from "./pages/admin/ProductosAdmin";
@@ -37,6 +39,8 @@ function App() {
         />
         <Route path="/contacto" element={<Contacto />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/pago/exitoso" element={<CheckoutSuccess />} />
+        <Route path="/pago/cancelado" element={<CheckoutCancel />} />
 
         <Route
           path="/recover-password"

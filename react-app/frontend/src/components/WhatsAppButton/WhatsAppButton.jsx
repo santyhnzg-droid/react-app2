@@ -1,4 +1,4 @@
-import whatsLogo from "../../assets/images/whats.png";
+﻿import whatsLogo from "../../assets/images/whats.png";
 
 export function WhatsAppButton() {
   return (

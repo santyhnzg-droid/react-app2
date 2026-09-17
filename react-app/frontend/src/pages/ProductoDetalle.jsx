@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+﻿import { useEffect, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Footer } from "../components/Footer/Footer";
 import { Navbar } from "../components/Navbar/Navbar";
-import { getProducto } from "../services/api";
+import { crearStripeCheckout, getProducto } from "../services/api";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/images/logo.png";
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = "http://127.0.0.1:8000";
 
 function getImageUrl(imagen) {
   if (!imagen) return logo;
@@ -16,9 +17,30 @@ function getImageUrl(imagen) {
 
 export function ProductoDetalle() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { autenticado } = useAuth();
   const [producto, setProducto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  async function comprarAhora() {
+    if (!autenticado) {
+      navigate("/login");
+      return;
+    }
+    if (!producto || producto.estado !== "activo" || producto.stock < 1) return;
+    try {
+      setCheckoutLoading(true);
+      setCheckoutError("");
+      const data = await crearStripeCheckout(producto.id, 1);
+      window.location.href = data.checkout_url;
+    } catch (requestError) {
+      setCheckoutError(requestError.message || "No fue posible iniciar el pago.");
+      setCheckoutLoading(false);
+    }
+  }
 
   useEffect(() => {
     const cargarProducto = async () => {
@@ -97,6 +119,14 @@ export function ProductoDetalle() {
               </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={comprarAhora}
+                  disabled={checkoutLoading || producto.estado !== "activo" || producto.stock < 1}
+                  className="rounded-xl bg-cyan-300 px-6 py-3 text-sm font-bold text-[#031016] transition hover:-translate-y-1 hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {checkoutLoading ? "Redirigiendo..." : "Comprar ahora"}
+                </button>
                 <Link to="/productos" className="rounded-xl border border-cyan-300/30 bg-cyan-300/10 px-6 py-3 text-sm font-semibold text-cyan-100 transition hover:-translate-y-1 hover:bg-cyan-300/20">
                   Ver catálogo
                 </Link>
@@ -104,6 +134,8 @@ export function ProductoDetalle() {
                   Consultar disponibilidad
                 </Link>
               </div>
+              {producto.estado !== "activo" && <p className="mt-4 text-sm text-amber-300">Este producto no está disponible actualmente.</p>}
+              {checkoutError && <p className="mt-4 text-sm text-red-300">{checkoutError}</p>}
             </div>
           </div>
         </div>
@@ -112,3 +144,4 @@ export function ProductoDetalle() {
     </div>
   );
 }
+

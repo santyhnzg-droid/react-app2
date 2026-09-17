@@ -1,4 +1,4 @@
-import {
+﻿import {
   useEffect,
   useState,
 } from "react";
@@ -25,7 +25,7 @@ const initialForm = {
 const categorias = [
   {
     id: 1,
-    nombre: "Acción",
+    nombre: "Accion",
   },
   {
     id: 2,
@@ -42,7 +42,7 @@ const categorias = [
 ];
 
 const BACKEND_URL =
-  "http://localhost:3000";
+  "http://127.0.0.1:8000";
 
 function getImageUrl(
   imagen

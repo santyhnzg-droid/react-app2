@@ -1,4 +1,4 @@
-export function Button({
+﻿export function Button({
   children,
   type = "button",
   onClick,
