@@ -12,6 +12,7 @@ import {
 } from "../components/Footer/Footer";
 
 import {
+  BACKEND_URL,
   getProductos,
   crearStripeCheckoutCarrito,
 } from "../services/api";
@@ -21,9 +22,6 @@ import { useNavigate } from "react-router-dom";
 import { Cart } from "../components/Cart/Cart";
 
 import logo from "../assets/images/logo.png";
-
-const BACKEND_URL =
-  "http://127.0.0.1:8000";
 
 function getImageUrl(
   imagen

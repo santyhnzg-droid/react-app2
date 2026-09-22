@@ -172,11 +172,6 @@ def recover_password(
     db.add(reset_token)
     db.commit()
 
-    print(
-        f"[PASSWORD RESET] {usuario.email} -> "
-        f"token={plain_token} (expira en 15 minutos)"
-    )
-
     response = dict(generic_response)
 
     if settings.APP_ENV.lower() == "development":

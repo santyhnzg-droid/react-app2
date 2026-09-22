@@ -1,6 +1,6 @@
 ﻿export const API_URL =
   import.meta.env.VITE_API_URL ||
-  "http://127.0.0.1:8000/api";
+  "/api";
 
 export const BACKEND_URL =
   API_URL.replace(/\/api\/?$/, "");
@@ -456,6 +456,18 @@ export async function registrarVenta(data) {
 }
 
 
+export async function getClientes() {
+  const response = await fetch(
+    `${API_URL}/usuarios/clientes`,
+    {
+      headers: getHeaders(true),
+    }
+  );
+
+  return processResponse(response);
+}
+
+
 export async function getResumenVentas() {
   const response = await fetch(
     `${API_URL}/ventas/resumen`,
@@ -464,6 +476,218 @@ export async function getResumenVentas() {
     }
   );
 
+  return processResponse(response);
+}
+
+
+export async function getVentas(params = {}) {
+  const query = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      query.set(key, value);
+    }
+  });
+
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const response = await fetch(`${API_URL}/ventas${suffix}`, {
+    headers: getHeaders(true),
+  });
+
+  return processResponse(response);
+}
+
+
+export async function getVenta(id) {
+  const response = await fetch(`${API_URL}/ventas/${id}`, {
+    headers: getHeaders(true),
+  });
+
+  return processResponse(response);
+}
+
+
+export async function actualizarEstadoVenta(id, estado) {
+  const response = await fetch(`${API_URL}/ventas/${id}/estado`, {
+    method: "PATCH",
+    headers: getHeaders(true),
+    body: JSON.stringify({ estado }),
+  });
+
+  return processResponse(response);
+}
+
+
+export async function getMisCompras() {
+  const response = await fetch(`${API_URL}/ventas/mis-compras`, {
+    headers: getHeaders(true),
+  });
+
+  return processResponse(response);
+}
+
+
+export async function getReporteVentasDiarias(fecha) {
+  const response = await fetch(
+    `${API_URL}/reportes/ventas-diarias?fecha=${encodeURIComponent(fecha)}`,
+    { headers: getHeaders(true) }
+  );
+
+  return processResponse(response);
+}
+
+
+export async function descargarReporteVentasDiariasPdf(fecha) {
+  const response = await fetch(
+    `${API_URL}/reportes/ventas-diarias/pdf?fecha=${encodeURIComponent(fecha)}`,
+    { headers: getHeaders(true) }
+  );
+
+  if (!response.ok) {
+    let message = "No fue posible generar el PDF.";
+    try {
+      const data = await response.json();
+      message = data.detail || data.message || message;
+    } catch {
+      // La respuesta puede no ser JSON cuando falla la generación.
+    }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `reporte-ventas-${fecha}.pdf`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+
+async function downloadFile(response, filename, fallbackMessage) {
+  if (!response.ok) {
+    let message = fallbackMessage;
+    try {
+      const data = await response.json();
+      message = data.detail || data.message || message;
+    } catch {
+      // La respuesta puede no ser JSON cuando falla una descarga.
+    }
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+
+export async function descargarReporteVentasDiariasExcel(fecha) {
+  const response = await fetch(
+    `${API_URL}/reportes/ventas-diarias/excel?fecha=${encodeURIComponent(fecha)}`,
+    { headers: getHeaders(true) }
+  );
+  return downloadFile(response, `reporte-ventas-${fecha}.xlsx`, "No fue posible generar el Excel.");
+}
+
+
+export async function crearFactura(ventaId) {
+  const response = await fetch(`${API_URL}/facturas`, {
+    method: "POST",
+    headers: getHeaders(true),
+    body: JSON.stringify({ venta_id: ventaId }),
+  });
+  return processResponse(response);
+}
+
+
+export async function getFacturas(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+  });
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const response = await fetch(`${API_URL}/facturas${suffix}`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function getFactura(id) {
+  const response = await fetch(`${API_URL}/facturas/${id}`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function descargarFacturaPdf(id, numeroFactura = id) {
+  const response = await fetch(`${API_URL}/facturas/${id}/pdf`, { headers: getHeaders(true) });
+  return downloadFile(response, `factura-${numeroFactura}.pdf`, "No fue posible generar la factura PDF.");
+}
+
+
+export async function getAdminDashboard() {
+  const response = await fetch(`${API_URL}/dashboard/admin`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function getSalesDashboard(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") query.set(key, value);
+  });
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const response = await fetch(`${API_URL}/dashboard/ventas${suffix}`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function crearPQR(data) {
+  const response = await fetch(`${API_URL}/pqr`, { method: "POST", headers: getHeaders(true), body: JSON.stringify(data) });
+  return processResponse(response);
+}
+
+
+export async function getPQR(params = {}) {
+  const query = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => { if (value !== undefined && value !== null && value !== "") query.set(key, value); });
+  const suffix = query.toString() ? `?${query.toString()}` : "";
+  const response = await fetch(`${API_URL}/pqr${suffix}`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function getPQRDetalle(id) {
+  const response = await fetch(`${API_URL}/pqr/${id}`, { headers: getHeaders(true) });
+  return processResponse(response);
+}
+
+
+export async function actualizarEstadoPQR(id, data) {
+  const response = await fetch(`${API_URL}/pqr/${id}/estado`, { method: "PATCH", headers: getHeaders(true), body: JSON.stringify(data) });
+  return processResponse(response);
+}
+
+
+export async function responderPQR(id, data) {
+  const response = await fetch(`${API_URL}/pqr/${id}/respuestas`, { method: "POST", headers: getHeaders(true), body: JSON.stringify(data) });
+  return processResponse(response);
+}
+
+
+export async function enviarMensajeChatbot(data) {
+  const response = await fetch(`${API_URL}/chatbot/mensaje`, { method: "POST", headers: getHeaders(true), body: JSON.stringify(data) });
   return processResponse(response);
 }
 

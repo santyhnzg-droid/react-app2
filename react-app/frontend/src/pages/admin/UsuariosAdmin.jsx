@@ -27,6 +27,10 @@ export function UsuariosAdmin() {
   const [editingId, setEditingId] = useState(null);
   const [mensaje, setMensaje] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   const cargar = async () => {
     try {
@@ -51,13 +55,16 @@ export function UsuariosAdmin() {
   const limpiar = () => {
     setForm(initialForm);
     setEditingId(null);
+    setShowForm(false);
   };
 
   const submit = async (e) => {
     e.preventDefault();
+    setSaving(true);
 
     try {
       setError("");
+      setMensaje("");
 
       const data = {
         ...form,
@@ -73,14 +80,17 @@ export function UsuariosAdmin() {
       }
 
       limpiar();
-      cargar();
+      await cargar();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const editar = (usuario) => {
     setEditingId(usuario.id);
+    setShowForm(true);
 
     setForm({
       nombre: usuario.nombre,
@@ -134,6 +144,8 @@ export function UsuariosAdmin() {
 
   const fieldClass =
     "w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 outline-none focus:border-cyan-300/40";
+  const totalPages = Math.max(1, Math.ceil(usuarios.length / pageSize));
+  const visibleUsuarios = usuarios.slice((page - 1) * pageSize, page * pageSize);
 
   return (
     <AdminShell
@@ -142,7 +154,15 @@ export function UsuariosAdmin() {
       description="Administra perfiles, roles y estados de las cuentas que tienen acceso a la plataforma."
     >
       <div className="mx-auto max-w-7xl">
-        <section className="mb-10 rounded-3xl border border-white/10 bg-white/[0.035] p-7">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-cyan-300/60">Usuarios</p>
+            <p className="mt-2 text-sm text-white/40">{usuarios.length} cuentas registradas</p>
+          </div>
+          <button type="button" onClick={() => { limpiar(); setShowForm(true); }} className="rounded-xl bg-cyan-300 px-5 py-3 font-bold text-[#031016] transition hover:bg-cyan-200">+ Nuevo usuario</button>
+        </div>
+
+        {showForm && <section className="mb-10 rounded-3xl border border-cyan-300/15 bg-[#080b11]/90 p-7 shadow-2xl shadow-black/20">
           <h2 className="mb-6 text-2xl font-semibold">
             {editingId
               ? "Editar usuario"
@@ -260,10 +280,8 @@ export function UsuariosAdmin() {
             </select>
 
             <div className="flex gap-3 md:col-span-2">
-              <button className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-6 py-3 text-cyan-200">
-                {editingId
-                  ? "Actualizar"
-                  : "Crear usuario"}
+              <button disabled={saving} className="rounded-xl bg-cyan-300 px-6 py-3 font-bold text-[#031016] transition hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-50">
+                {saving ? "Guardando..." : editingId ? "Actualizar usuario" : "Crear usuario"}
               </button>
 
               {editingId && (
@@ -289,7 +307,7 @@ export function UsuariosAdmin() {
               {error}
             </p>
           )}
-        </section>
+        </section>}
 
         <section className="overflow-x-auto rounded-2xl border border-white/10">
           <table className="w-full min-w-237.5 text-left text-sm">
@@ -305,7 +323,7 @@ export function UsuariosAdmin() {
             </thead>
 
             <tbody>
-              {usuarios.map((usuario) => (
+              {visibleUsuarios.map((usuario) => (
                 <tr
                   key={usuario.id}
                   className="border-t border-white/5"
@@ -368,6 +386,14 @@ export function UsuariosAdmin() {
             </tbody>
           </table>
         </section>
+        <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white/60">
+          <span>Mostrando {visibleUsuarios.length} de {usuarios.length}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="rounded-lg border border-white/10 px-3 py-2 disabled:opacity-30">Anterior</button>
+            <span>Página {page} de {totalPages}</span>
+            <button type="button" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className="rounded-lg border border-white/10 px-3 py-2 disabled:opacity-30">Siguiente</button>
+          </div>
+        </div>
       </div>
     </AdminShell>
   );

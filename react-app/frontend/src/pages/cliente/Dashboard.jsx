@@ -6,15 +6,30 @@ import {
   useAuth,
 } from "../../context/AuthContext";
 
+import { useEffect, useState } from "react";
+
 import {
   Navbar,
 } from "../../components/Navbar/Navbar";
+
+import { getServicios } from "../../services/api";
 
 
 export function ClienteDashboard() {
   const {
     usuario,
   } = useAuth();
+
+  const [servicios, setServicios] = useState([]);
+  const [serviciosLoading, setServiciosLoading] = useState(true);
+
+  useEffect(() => {
+    getServicios()
+      .then((data) => {
+        setServicios((data.servicios || []).filter((servicio) => servicio.estado === "activo"));
+      })
+      .finally(() => setServiciosLoading(false));
+  }, []);
 
 
   return (
@@ -271,6 +286,38 @@ export function ClienteDashboard() {
 
           </div>
 
+        </section>
+
+
+        {/* SERVICIOS */}
+        <section className="mt-7 rounded-[28px] border border-violet-300/15 bg-linear-to-br from-violet-400/[0.08] to-cyan-400/[0.04] p-7 shadow-2xl backdrop-blur-xl md:p-8">
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.25em] text-violet-300/70">Servicios GameZone</p>
+              <h2 className="mt-3 text-2xl font-black text-white md:text-3xl">Soluciones para tu experiencia</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-white/45">Consulta los servicios disponibles y elige la opción que mejor se adapte a ti.</p>
+            </div>
+            <span className="rounded-full border border-emerald-300/15 bg-emerald-300/10 px-3 py-1.5 text-xs font-bold text-emerald-300">{servicios.length} disponibles</span>
+          </div>
+
+          {serviciosLoading ? (
+            <div className="mt-6 h-28 animate-pulse rounded-2xl bg-white/5" />
+          ) : servicios.length ? (
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {servicios.map((servicio) => (
+                <article key={servicio.id} className="group rounded-2xl border border-white/10 bg-[#080b12]/70 p-5 transition hover:-translate-y-1 hover:border-violet-300/35 hover:bg-violet-300/[0.06]">
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/15 text-lg text-violet-200">✦</span>
+                    <span className="text-lg font-black text-cyan-200">${Number(servicio.precio).toLocaleString("es-CO")}</span>
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold text-white">{servicio.nombre}</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/45">{servicio.descripcion || "Servicio disponible para clientes GameZone."}</p>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-2xl border border-dashed border-white/10 px-5 py-8 text-center text-sm text-white/40">Aún no hay servicios publicados.</div>
+          )}
         </section>
 
 

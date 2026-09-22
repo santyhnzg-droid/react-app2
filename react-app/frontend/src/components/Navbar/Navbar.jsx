@@ -81,6 +81,15 @@ export function Navbar() {
   };
 
 
+  const getPqrPath = () => {
+    if (usuario?.rol === "Administrador" || usuario?.rol === "Empleado") {
+      return "/admin/pqr";
+    }
+
+    return usuario ? "/cliente/pqr" : "/login";
+  };
+
+
   const isActive = (path) => {
     if (path === "/") {
       return (
@@ -238,6 +247,15 @@ export function Navbar() {
 
           <li>
             <Link
+              to="/servicios"
+              className={navClass("/servicios")}
+            >
+              Servicios
+            </Link>
+          </li>
+
+          <li>
+            <Link
               to="/quienes-somos"
               className={navClass(
                 "/quienes-somos"
@@ -255,6 +273,15 @@ export function Navbar() {
               )}
             >
               Contacto
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              to={getPqrPath()}
+              className={navClass("/cliente/pqr")}
+            >
+              PQR / Soporte
             </Link>
           </li>
 
@@ -639,6 +666,17 @@ export function Navbar() {
                         >
                           Explorar catálogo
                         </span>
+                      </span>
+                    </Link>
+
+                    <Link
+                      to={getPqrPath()}
+                      className="mt-1 flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-white/70 transition hover:bg-amber-400/8 hover:text-amber-200"
+                    >
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-400/10 text-amber-300">?</span>
+                      <span>
+                        <span className="block font-semibold">PQR / Soporte</span>
+                        <span className="mt-0.5 block text-[11px] text-white/30">Solicitar ayuda o consultar casos</span>
                       </span>
                     </Link>
 

@@ -1,7 +1,7 @@
 ﻿import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
-import { consultarStripeCheckout } from "../services/api";
+import { consultarStripeCheckout, descargarFacturaPdf } from "../services/api";
 
 
 export function CheckoutSuccess() {
@@ -9,6 +9,7 @@ export function CheckoutSuccess() {
   const sessionId = searchParams.get("session_id");
   const [estado, setEstado] = useState("PENDING");
   const [error, setError] = useState("");
+  const [factura, setFactura] = useState(null);
 
   useEffect(() => {
     if (!sessionId) {
@@ -25,6 +26,14 @@ export function CheckoutSuccess() {
         const result = await consultarStripeCheckout(sessionId);
         if (!activo) return;
         setEstado(result.estado);
+        if (result.factura_id) {
+          setFactura({ id: result.factura_id, numero: result.numero_factura });
+        }
+        if (result.estado === "APPROVED") {
+          setError("");
+        } else if (result.estado === "FAILED" && result.mensaje_error) {
+          setError(result.mensaje_error);
+        }
         if (result.estado === "PENDING" && intentos < 10) {
           intentos += 1;
           timer = window.setTimeout(consultar, 3000);
@@ -55,6 +64,15 @@ export function CheckoutSuccess() {
         <p className="text-xs font-bold uppercase tracking-[0.3em] text-cyan-300">GameZone</p>
         <h1 className="mt-6 text-3xl font-semibold">{messages[estado]}</h1>
         {error && <p className="mt-4 text-sm text-red-300">{error}</p>}
+        {estado === "APPROVED" && factura && (
+          <button
+            type="button"
+            onClick={() => descargarFacturaPdf(factura.id, factura.numero)}
+            className="mt-8 inline-block rounded-xl border border-cyan-300/40 px-6 py-3 text-sm font-bold text-cyan-200 hover:bg-cyan-300/10"
+          >
+            Descargar factura PDF
+          </button>
+        )}
         <Link to="/productos" className="mt-8 inline-block rounded-xl bg-cyan-300 px-6 py-3 text-sm font-bold text-[#031016]">Volver al catálogo</Link>
       </section>
     </main>

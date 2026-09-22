@@ -10,6 +10,7 @@ import { Navbar } from "../../components/Navbar/Navbar";
 
 import {
   getProductImageUrl,
+  getClientes,
   getProductos,
   getResumenVentas,
   registrarVenta,
@@ -32,6 +33,9 @@ export function EmpleadoDashboard() {
     carrito,
     setCarrito,
   ] = useState([]);
+
+  const [clientes, setClientes] = useState([]);
+  const [clienteId, setClienteId] = useState("");
 
   const [
     loading,
@@ -85,6 +89,16 @@ export function EmpleadoDashboard() {
   }
 
 
+  async function loadClients() {
+    try {
+      const result = await getClientes();
+      setClientes(result.clientes || []);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+
   async function loadSalesSummary() {
     try {
       const result = await getResumenVentas();
@@ -97,6 +111,7 @@ export function EmpleadoDashboard() {
 
   useEffect(() => {
     loadProducts();
+    loadClients();
     loadSalesSummary();
   }, []);
 
@@ -251,6 +266,11 @@ export function EmpleadoDashboard() {
       return;
     }
 
+    if (!clienteId) {
+      setError("Selecciona el cliente antes de confirmar la venta para poder generar su factura.");
+      return;
+    }
+
     setError("");
     setMessage("");
     setSaving(true);
@@ -258,6 +278,7 @@ export function EmpleadoDashboard() {
     try {
       const result =
         await registrarVenta({
+          cliente_id: Number(clienteId),
           items: carrito.map(
             (item) => ({
               producto_id:
@@ -277,6 +298,7 @@ export function EmpleadoDashboard() {
       );
 
       setCarrito([]);
+      setClienteId("");
 
       await loadProducts();
       await loadSalesSummary();
@@ -797,6 +819,28 @@ export function EmpleadoDashboard() {
 
           {/* PRODUCTOS */}
           <div>
+            <div className="mt-6 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4">
+              <label className="block text-xs font-bold uppercase tracking-[0.15em] text-cyan-200/70">
+                Cliente de la venta
+                <select
+                  value={clienteId}
+                  onChange={(event) => setClienteId(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-white/10 bg-[#10151d] px-3 py-3 text-sm normal-case tracking-normal text-white outline-none focus:border-cyan-300/50"
+                >
+                  <option value="">Selecciona el cliente</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nombre} {cliente.apellido} · {cliente.numero_documento}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="mt-2 text-xs leading-5 text-white/35">
+                El cliente seleccionado quedará asociado a la venta y podrá recibir su factura.
+              </p>
+            </div>
+
+
             <div
               className="
                 mb-5
@@ -1500,7 +1544,8 @@ export function EmpleadoDashboard() {
                 onClick={confirmSale}
                 disabled={
                   saving ||
-                  !carrito.length
+                  !carrito.length ||
+                  !clienteId
                 }
                 className="
                   mt-5

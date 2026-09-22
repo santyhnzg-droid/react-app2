@@ -1,13 +1,13 @@
 from sqlalchemy import (
     Column,
+    DateTime,
     Enum,
     String,
     Text,
+    text,
 )
 
-from sqlalchemy.dialects.mysql import (
-    INTEGER,
-)
+from sqlalchemy import Integer
 
 from sqlalchemy.orm import relationship
 
@@ -18,20 +18,20 @@ class Category(Base):
     __tablename__ = "categorias"
 
     id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         primary_key=True,
         autoincrement=True,
         index=True,
     )
 
     nombre = Column(
-        String(100),
+        String(80),
         unique=True,
         nullable=False,
     )
 
     descripcion = Column(
-        Text,
+        String(255),
         nullable=True,
     )
 
@@ -39,6 +39,8 @@ class Category(Base):
         Enum(
             "activo",
             "inactivo",
+            native_enum=False,
+            length=10,
         ),
         default="activo",
         nullable=False,
@@ -48,3 +50,5 @@ class Category(Base):
         "Product",
         back_populates="categoria",
     )
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))

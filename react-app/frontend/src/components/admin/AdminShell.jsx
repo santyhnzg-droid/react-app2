@@ -7,16 +7,24 @@ const adminNavigation = [
   { label: "Productos", path: "/admin/productos", mark: "02" },
   { label: "Usuarios", path: "/admin/usuarios", mark: "03" },
   { label: "Servicios", path: "/admin/servicios", mark: "04" },
+  { label: "Historial de ventas", path: "/ventas/historial", mark: "05" },
+  { label: "Facturación", path: "/facturas", mark: "06" },
+  { label: "Dashboard de ventas", path: "/ventas/dashboard", mark: "07" },
+  { label: "Gestión PQR", path: "/admin/pqr", mark: "08" },
 ];
 
 const employeeNavigation = [
   { label: "Caja de ventas", path: "/empleado", mark: "01" },
-  { label: "Catálogo público", path: "/productos", mark: "02" },
+  { label: "Historial de ventas", path: "/ventas/historial", mark: "02" },
+  { label: "Facturación", path: "/facturas", mark: "03" },
+  { label: "Dashboard de ventas", path: "/ventas/dashboard", mark: "04" },
+  { label: "PQR", path: "/admin/pqr", mark: "05" },
+  { label: "Catálogo público", path: "/productos", mark: "06" },
 ];
 
 export function AdminShell({ eyebrow, title, description, children }) {
   const location = useLocation();
-  const { usuario } = useAuth();
+  const { usuario, cerrarSesion } = useAuth();
   const navigation = usuario?.rol === "Administrador"
     ? adminNavigation
     : employeeNavigation;
@@ -76,6 +84,10 @@ export function AdminShell({ eyebrow, title, description, children }) {
                 <span className="block truncate text-[10px] text-white/35">{usuario?.rol}</span>
               </span>
             </div>
+            <button type="button" onClick={() => { cerrarSesion(); window.location.assign("/login"); }} className="mt-3 flex w-full items-center justify-between rounded-2xl border border-rose-300/15 bg-rose-400/[0.06] px-3 py-3 text-xs text-rose-100/80 transition hover:bg-rose-400/15 hover:text-white">
+              <span>Cerrar sesión</span>
+              <span>↪</span>
+            </button>
           </div>
         </aside>
 
@@ -104,6 +116,9 @@ export function AdminShell({ eyebrow, title, description, children }) {
                 <Link key={item.path} to={item.path} className={`whitespace-nowrap rounded-xl px-3 py-2 text-xs ${location.pathname === item.path ? "bg-cyan-300/10 text-cyan-200" : "text-white/45"}`}>{item.label}</Link>
               ))}
             </nav>
+            <button type="button" onClick={() => { cerrarSesion(); window.location.assign("/login"); }} className="mt-5 w-full rounded-xl border border-rose-300/15 bg-rose-400/[0.06] px-4 py-3 text-left text-xs text-rose-100/80 transition hover:bg-rose-400/15 hover:text-white lg:hidden">
+              Cerrar sesión
+            </button>
           </header>
 
           {children}

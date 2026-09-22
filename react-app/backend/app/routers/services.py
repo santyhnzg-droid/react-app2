@@ -291,12 +291,14 @@ def delete_service(
             ),
         )
 
-    db.delete(servicio)
+    # Los servicios pueden aparecer en ventas históricas; se conserva el
+    # registro y se impide que vuelva a venderse.
+    servicio.estado = "inactivo"
     db.commit()
 
     return {
         "ok": True,
         "message": (
-            "Servicio eliminado correctamente."
+            "Servicio desactivado correctamente."
         ),
     }

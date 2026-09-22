@@ -8,6 +8,7 @@ import {
   cambiarEstadoProducto,
   crearProducto,
   eliminarProducto,
+  BACKEND_URL,
   getProductos,
   subirImagenProducto,
 } from "../../services/api";
@@ -40,9 +41,6 @@ const categorias = [
     nombre: "Supervivencia",
   },
 ];
-
-const BACKEND_URL =
-  "http://127.0.0.1:8000";
 
 function getImageUrl(
   imagen
@@ -117,6 +115,9 @@ export function ProductosAdmin() {
     error,
     setError,
   ] = useState("");
+  const [showForm, setShowForm] = useState(false);
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
 
   /* =========================
      CARGAR PRODUCTOS
@@ -271,6 +272,8 @@ export function ProductosAdmin() {
       setImagePreview(
         ""
       );
+
+      setShowForm(false);
     };
 
   /* =========================
@@ -407,6 +410,8 @@ export function ProductosAdmin() {
       producto.id
     );
 
+    setShowForm(true);
+
     setImageFile(
       null
     );
@@ -524,6 +529,9 @@ export function ProductosAdmin() {
       }
     };
 
+  const totalPages = Math.max(1, Math.ceil(productos.length / pageSize));
+  const visibleProductos = productos.slice((page - 1) * pageSize, page * pageSize);
+
   return (
     <AdminShell
       eyebrow="GameZone Admin / Catálogo"
@@ -531,6 +539,14 @@ export function ProductosAdmin() {
       description="Crea, edita y organiza los videojuegos que aparecen en el catálogo."
     >
       <div className="mx-auto max-w-7xl">
+
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-cyan-300/60">Productos</p>
+            <p className="mt-2 text-sm text-white/40">{productos.length} productos registrados</p>
+          </div>
+          <button type="button" onClick={() => { limpiarFormulario(); setShowForm(true); }} className="rounded-xl bg-cyan-300 px-5 py-3 font-bold text-[#031016] transition hover:bg-cyan-200">+ Nuevo producto</button>
+        </div>
 
         {/* =====================
             HEADER
@@ -540,7 +556,7 @@ export function ProductosAdmin() {
             FORM
         ===================== */}
 
-        <section className="mb-10 rounded-3xl border border-white/10 bg-white/[0.035] p-6 backdrop-blur-xl md:p-8">
+        {showForm && <section className="mb-10 rounded-3xl border border-white/10 bg-white/[0.035] p-6 backdrop-blur-xl md:p-8">
 
           <div className="mb-7 flex items-center justify-between gap-4">
 
@@ -821,7 +837,7 @@ export function ProductosAdmin() {
               {error}
             </p>
           )}
-        </section>
+        </section>}
 
         {/* =====================
             TABLA
@@ -911,7 +927,7 @@ export function ProductosAdmin() {
                     </td>
                   </tr>
                 ) : (
-                  productos.map(
+                  visibleProductos.map(
                     (
                       producto
                     ) => (
@@ -1063,6 +1079,15 @@ export function ProductosAdmin() {
           </div>
 
         </section>
+
+        <div className="mt-5 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3 text-sm text-white/60">
+          <span>Mostrando {visibleProductos.length} de {productos.length}</span>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={page === 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="rounded-lg border border-white/10 px-3 py-2 disabled:opacity-30">Anterior</button>
+            <span>Página {page} de {totalPages}</span>
+            <button type="button" disabled={page === totalPages} onClick={() => setPage((current) => Math.min(totalPages, current + 1))} className="rounded-lg border border-white/10 px-3 py-2 disabled:opacity-30">Siguiente</button>
+          </div>
+        </div>
 
       </div>
     </AdminShell>

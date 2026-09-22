@@ -1,14 +1,14 @@
 from sqlalchemy import (
     Column,
+    DateTime,
     DECIMAL,
     Enum,
     String,
     Text,
+    text,
 )
 
-from sqlalchemy.dialects.mysql import (
-    INTEGER,
-)
+from sqlalchemy import Integer
 
 from app.core.database import Base
 
@@ -17,7 +17,7 @@ class Service(Base):
     __tablename__ = "servicios"
 
     id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         primary_key=True,
         autoincrement=True,
         index=True,
@@ -42,7 +42,11 @@ class Service(Base):
         Enum(
             "activo",
             "inactivo",
+            native_enum=False,
+            length=10,
         ),
         default="activo",
         nullable=False,
     )
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))

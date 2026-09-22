@@ -3,11 +3,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { Footer } from "../components/Footer/Footer";
 import { Navbar } from "../components/Navbar/Navbar";
-import { crearStripeCheckout, getProducto } from "../services/api";
+import { BACKEND_URL, crearStripeCheckout, getProducto } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import logo from "../assets/images/logo.png";
-
-const BACKEND_URL = "http://127.0.0.1:8000";
 
 function getImageUrl(imagen) {
   if (!imagen) return logo;

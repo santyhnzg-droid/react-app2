@@ -7,6 +7,7 @@
 
 import { Inicio } from "./pages/Inicio";
 import { Productos } from "./pages/Productos";
+import { Servicios } from "./pages/Servicios";
 import { QuienesSomos } from "./pages/QuienesSomos";
 import { Contacto } from "./pages/Contacto";
 import { Login } from "./pages/Login";
@@ -19,12 +20,18 @@ import { AdminDashboard } from "./pages/admin/Dashboard";
 import { ProductosAdmin } from "./pages/admin/ProductosAdmin";
 import { UsuariosAdmin } from "./pages/admin/UsuariosAdmin";
 import { ServiciosAdmin } from "./pages/admin/ServiciosAdmin";
+import { VentasHistorial } from "./pages/admin/VentasHistorial";
+import { FacturasAdmin } from "./pages/admin/FacturasAdmin";
+import { VentasDashboard } from "./pages/admin/VentasDashboard";
+import { PQRAdmin } from "./pages/admin/PQRAdmin";
+import { PQRCliente } from "./pages/cliente/PQR";
 
 import { EmpleadoDashboard } from "./pages/empleado/Dashboard";
 import { ClienteDashboard } from "./pages/cliente/Dashboard";
 
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { WhatsAppButton } from "./components/WhatsAppButton/WhatsAppButton";
+import { ChatbotWidget } from "./components/Chatbot/ChatbotWidget";
 
 function App() {
   return (
@@ -32,6 +39,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Inicio />} />
         <Route path="/productos" element={<Productos />} />
+        <Route path="/servicios" element={<Servicios />} />
         <Route path="/productos/:id" element={<ProductoDetalle />} />
         <Route
           path="/quienes-somos"
@@ -84,6 +92,51 @@ function App() {
         />
 
         <Route
+          path="/ventas/historial"
+          element={
+            <ProtectedRoute roles={["Administrador", "Empleado"]}>
+              <VentasHistorial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/facturas"
+          element={
+            <ProtectedRoute roles={["Administrador", "Empleado"]}>
+              <FacturasAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/ventas/dashboard"
+          element={
+            <ProtectedRoute roles={["Administrador", "Empleado"]}>
+              <VentasDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/pqr"
+          element={
+            <ProtectedRoute roles={["Administrador", "Empleado"]}>
+              <PQRAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/cliente/pqr"
+          element={
+            <ProtectedRoute roles={["Cliente"]}>
+              <PQRCliente />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/empleado"
           element={
             <ProtectedRoute roles={["Empleado"]}>
@@ -108,6 +161,7 @@ function App() {
       </Routes>
 
       <WhatsAppButton />
+      <ChatbotWidget />
     </BrowserRouter>
   );
 }

@@ -16,7 +16,7 @@ export function Cart({ items, total, loading = false, authenticated = true, mess
 
   return (
     <>
-      <button type="button" aria-label="Abrir carrito" onClick={() => setOpen(true)} className="fixed bottom-24 right-6 z-40 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-300/30 bg-[#0b1118]/95 text-cyan-100 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl transition hover:-translate-y-1 hover:border-cyan-200/70 hover:bg-[#101d28]">
+      <button type="button" aria-label="Abrir carrito" onClick={() => setOpen(true)} className="fixed right-6 top-28 z-40 flex h-16 w-16 items-center justify-center rounded-full border border-cyan-300/30 bg-[#0b1118]/95 text-cyan-100 shadow-2xl shadow-cyan-950/40 backdrop-blur-xl transition hover:-translate-y-1 hover:border-cyan-200/70 hover:bg-[#101d28]">
         <span className="text-2xl">🛒</span>
         {totalUnits > 0 && <span className="absolute -right-1 -top-1 flex h-7 min-w-7 items-center justify-center rounded-full bg-cyan-300 px-1.5 text-xs font-black text-[#031016]">{totalUnits}</span>}
       </button>

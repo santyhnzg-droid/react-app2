@@ -5,9 +5,7 @@ from sqlalchemy import (
     String,
 )
 
-from sqlalchemy.dialects.mysql import (
-    INTEGER,
-)
+from sqlalchemy import Integer
 
 from sqlalchemy.orm import relationship
 
@@ -20,14 +18,14 @@ class PasswordResetToken(Base):
     )
 
     id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         primary_key=True,
         autoincrement=True,
         index=True,
     )
 
     usuario_id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         ForeignKey(
             "usuarios.id",
             ondelete="CASCADE",

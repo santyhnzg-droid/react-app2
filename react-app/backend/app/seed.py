@@ -1,3 +1,5 @@
+from sqlalchemy import text
+
 from app.core.config import settings
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import hash_password
@@ -38,6 +40,18 @@ ROLE_PERMISSIONS = {
 
 def create_tables():
     Base.metadata.create_all(bind=engine)
+
+    # Las ventas de mostrador pueden registrarse sin asociar un cliente.
+    # Algunas bases creadas con una versión anterior tenían una restricción
+    # que obligaba a informar `cliente_id`, aunque el modelo actual lo deja
+    # opcional. Corrige esa diferencia de esquema de forma idempotente.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "ALTER TABLE ventas "
+                "DROP CONSTRAINT IF EXISTS ck_ventas_cliente_requerido"
+            )
+        )
 
 
 def seed_roles(db):

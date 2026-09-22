@@ -20,6 +20,9 @@ export function ServiciosAdmin() {
   const [form, setForm] = useState(initialForm);
   const [editingId, setEditingId] = useState(null);
   const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const cargar = async () => {
     try {
@@ -43,6 +46,9 @@ export function ServiciosAdmin() {
 
   const submit = async (e) => {
     e.preventDefault();
+    setError("");
+    setMensaje("");
+    setSaving(true);
 
     try {
       const data = {
@@ -58,14 +64,19 @@ export function ServiciosAdmin() {
 
       setEditingId(null);
       setForm(initialForm);
-      cargar();
+      setShowForm(false);
+      setMensaje(editingId ? "Servicio actualizado correctamente." : "Servicio creado correctamente.");
+      await cargar();
     } catch (err) {
       setError(err.message);
+    } finally {
+      setSaving(false);
     }
   };
 
   const editar = (servicio) => {
     setEditingId(servicio.id);
+    setShowForm(true);
 
     setForm({
       nombre: servicio.nombre,
@@ -110,17 +121,29 @@ export function ServiciosAdmin() {
     >
       <div className="mx-auto max-w-6xl">
 
-        <form
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-3xl border border-white/10 bg-white/[0.035] p-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-cyan-300/60">Servicios</p>
+            <p className="mt-2 text-sm text-white/40">Gestiona los servicios publicados en GameZone.</p>
+          </div>
+          <button type="button" onClick={() => { setEditingId(null); setForm(initialForm); setShowForm(true); }} className="rounded-xl bg-cyan-300 px-5 py-3 font-bold text-[#031016] transition hover:bg-cyan-200">+ Nuevo servicio</button>
+        </div>
+
+        {showForm && <form
           onSubmit={submit}
-          className="mb-10 grid gap-4 rounded-3xl border border-white/10 bg-white/[0.035] p-7 md:grid-cols-2"
+          className="mb-10 grid gap-4 rounded-3xl border border-cyan-300/10 bg-[#080b11]/80 p-7 shadow-2xl shadow-black/10 backdrop-blur-xl md:grid-cols-2"
         >
+          <div className="md:col-span-2">
+            <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-cyan-300/65">Formulario de servicio</p>
+            <p className="mt-2 text-sm text-white/40">Completa los datos y publica el servicio cuando esté listo.</p>
+          </div>
           <input
             name="nombre"
             value={form.nombre}
             onChange={handleChange}
             placeholder="Nombre"
             required
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-cyan-300/50"
           />
 
           <input
@@ -131,7 +154,7 @@ export function ServiciosAdmin() {
             placeholder="Precio"
             min="0"
             required
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-cyan-300/50"
           />
 
           <textarea
@@ -139,16 +162,20 @@ export function ServiciosAdmin() {
             value={form.descripcion}
             onChange={handleChange}
             placeholder="Descripción"
-            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 md:col-span-2"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white outline-none transition focus:border-cyan-300/50 md:col-span-2"
           />
 
-          <button className="rounded-xl border border-cyan-300/30 bg-cyan-400/10 px-6 py-3 text-cyan-200">
-            {editingId ? "Actualizar" : "Crear"}
-          </button>
-        </form>
+          <div className="flex gap-3 md:col-span-2">
+            <button disabled={saving} className="rounded-xl bg-cyan-300 px-6 py-3 font-bold text-[#031016] transition hover:bg-cyan-200 disabled:cursor-wait disabled:opacity-50">
+              {saving ? "Guardando..." : editingId ? "Actualizar servicio" : "Crear servicio"}
+            </button>
+            {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(initialForm); }} className="rounded-xl border border-white/10 px-6 py-3 text-white/70 transition hover:bg-white/10">Cancelar</button>}
+          </div>
+        </form>}
 
+        {mensaje && <p className="mb-5 rounded-xl border border-emerald-300/20 bg-emerald-400/10 px-4 py-3 text-emerald-200">{mensaje}</p>}
         {error && (
-          <p className="mb-5 text-red-300">
+          <p className="mb-5 rounded-xl border border-rose-300/20 bg-rose-400/10 px-4 py-3 text-rose-200">
             {error}
           </p>
         )}

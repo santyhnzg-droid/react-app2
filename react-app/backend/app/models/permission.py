@@ -1,14 +1,14 @@
 from sqlalchemy import (
     Column,
+    DateTime,
     ForeignKey,
     String,
     Table,
     Text,
+    text,
 )
 
-from sqlalchemy.dialects.mysql import (
-    INTEGER,
-)
+from sqlalchemy import Integer
 
 from sqlalchemy.orm import relationship
 
@@ -21,7 +21,7 @@ role_permission = Table(
 
     Column(
         "rol_id",
-        INTEGER(unsigned=True),
+        Integer,
         ForeignKey(
             "roles.id",
             ondelete="CASCADE",
@@ -31,7 +31,7 @@ role_permission = Table(
 
     Column(
         "permiso_id",
-        INTEGER(unsigned=True),
+        Integer,
         ForeignKey(
             "permisos.id",
             ondelete="CASCADE",
@@ -45,7 +45,7 @@ class Permission(Base):
     __tablename__ = "permisos"
 
     id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         primary_key=True,
         autoincrement=True,
         index=True,
@@ -58,9 +58,10 @@ class Permission(Base):
     )
 
     descripcion = Column(
-        Text,
+        String(255),
         nullable=True,
     )
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
 
     roles = relationship(
         "Role",

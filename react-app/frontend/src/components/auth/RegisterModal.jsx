@@ -1,4 +1,5 @@
 ﻿import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import {
   registrarUsuario,
 } from "../../services/api";
@@ -298,7 +299,7 @@ const handleSubmit = async (e) => {
   }
 };
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     setForm(initialForm);
 
     setErrors(initialErrors);
@@ -306,7 +307,7 @@ const handleSubmit = async (e) => {
     setSuccess(false);
 
     onClose();
-  };
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -328,7 +329,7 @@ const handleSubmit = async (e) => {
 
       document.body.style.overflow = "";
     };
-  }, [isOpen]);
+  }, [handleClose, isOpen]);
 
   if (!isOpen) {
     return null;

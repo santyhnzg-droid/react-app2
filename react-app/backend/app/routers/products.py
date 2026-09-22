@@ -12,6 +12,7 @@ from fastapi import (
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db
 
 from app.dependencies.auth import (
@@ -180,9 +181,9 @@ async def upload_product_image(
         ),
         "filename": filename,
         "url": (
-            f"http://127.0.0.1:8000/"
-            f"uploads/products/"
-            f"{filename}"
+            f"{settings.BACKEND_PUBLIC_URL}/uploads/products/{filename}"
+            if settings.BACKEND_PUBLIC_URL
+            else f"/uploads/products/{filename}"
         ),
     }
 
@@ -464,12 +465,14 @@ def delete_product(
             ),
         )
 
-    db.delete(producto)
+    # Los productos pueden estar referenciados por ventas y facturas.
+    # Se desactivan para preservar el histórico y evitar huérfanos.
+    producto.estado = "inactivo"
     db.commit()
 
     return {
         "ok": True,
         "message": (
-            "Producto eliminado correctamente."
+            "Producto desactivado correctamente."
         ),
     }

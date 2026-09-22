@@ -1,15 +1,15 @@
 from sqlalchemy import (
     Column,
+    DateTime,
     DECIMAL,
     Enum,
     ForeignKey,
     String,
     Text,
+    text,
 )
 
-from sqlalchemy.dialects.mysql import (
-    INTEGER,
-)
+from sqlalchemy import Integer
 
 from sqlalchemy.orm import relationship
 
@@ -20,7 +20,7 @@ class Product(Base):
     __tablename__ = "productos"
 
     id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         primary_key=True,
         autoincrement=True,
         index=True,
@@ -42,7 +42,7 @@ class Product(Base):
     )
 
     stock = Column(
-        INTEGER(unsigned=True),
+        Integer,
         default=0,
         nullable=False,
     )
@@ -53,7 +53,7 @@ class Product(Base):
     )
 
     categoria_id = Column(
-        INTEGER(unsigned=True),
+        Integer,
         ForeignKey(
             "categorias.id"
         ),
@@ -64,6 +64,8 @@ class Product(Base):
         Enum(
             "activo",
             "inactivo",
+            native_enum=False,
+            length=10,
         ),
         default="activo",
         nullable=False,
@@ -73,3 +75,5 @@ class Product(Base):
         "Category",
         back_populates="productos",
     )
+    created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))

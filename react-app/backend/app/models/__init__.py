@@ -30,6 +30,11 @@ from app.models.password_reset import (
 
 from app.models.payment import Payment, PaymentItem
 
+from app.models.invoice import Invoice, InvoiceDetail
+from app.models.report import GeneratedReport
+from app.models.pqr import PQR, PQRResponse
+from app.models.conversation import Conversation, Message
+
 
 __all__ = [
     "Permission",
@@ -44,4 +49,11 @@ __all__ = [
     "PasswordResetToken",
     "Payment",
     "PaymentItem",
+    "Invoice",
+    "InvoiceDetail",
+    "GeneratedReport",
+    "PQR",
+    "PQRResponse",
+    "Conversation",
+    "Message",
 ]

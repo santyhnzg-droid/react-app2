@@ -188,6 +188,35 @@ def get_users(
     }
 
 
+@router.get("/clientes")
+def get_clients(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("Empleado", "Administrador")),
+):
+    """Lista únicamente clientes activos para la caja y la facturación."""
+    clientes = (
+        db.query(User)
+        .join(Role, User.rol_id == Role.id)
+        .filter(Role.nombre == "Cliente", User.estado == "activo")
+        .order_by(User.nombre.asc(), User.apellido.asc())
+        .all()
+    )
+    return {"ok": True, "clientes": [serialize_user(cliente) for cliente in clientes]}
+
+
+def _is_last_active_admin(db: Session, usuario: User) -> bool:
+    return (
+        usuario.rol is not None
+        and usuario.rol.nombre == "Administrador"
+        and usuario.estado == "activo"
+        and db.query(User.id)
+        .join(Role, User.rol_id == Role.id)
+        .filter(Role.nombre == "Administrador", User.estado == "activo")
+        .count()
+        <= 1
+    )
+
+
 @router.get(
     "/{user_id}"
 )
@@ -279,6 +308,12 @@ def create_user(
         raise HTTPException(
             status_code=400,
             detail="Rol inválido.",
+        )
+
+    if role.nombre != "Administrador" and _is_last_active_admin(db, usuario):
+        raise HTTPException(
+            status_code=409,
+            detail="Debe existir al menos un administrador activo.",
         )
 
     usuario = User(
@@ -482,6 +517,12 @@ def change_user_state(
             ),
         )
 
+    if data.estado == "inactivo" and _is_last_active_admin(db, usuario):
+        raise HTTPException(
+            status_code=409,
+            detail="Debe existir al menos un administrador activo.",
+        )
+
     usuario.estado = (
         data.estado
     )
@@ -537,12 +578,20 @@ def delete_user(
             ),
         )
 
-    db.delete(usuario)
+    if _is_last_active_admin(db, usuario):
+        raise HTTPException(
+            status_code=409,
+            detail="No se puede desactivar al único administrador activo.",
+        )
+
+    # Las ventas, pagos, facturas y PQR conservan referencias al usuario.
+    # La baja lógica evita romper el histórico y bloquea el acceso.
+    usuario.estado = "inactivo"
     db.commit()
 
     return {
         "ok": True,
         "message": (
-            "Usuario eliminado correctamente."
+            "Usuario desactivado correctamente."
         ),
     }
