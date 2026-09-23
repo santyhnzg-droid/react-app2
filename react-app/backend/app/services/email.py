@@ -18,6 +18,7 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.core.config import settings
+from app.services.invoice_pdf import build_invoice_pdf
 
 
 logger = logging.getLogger(__name__)
@@ -92,6 +93,10 @@ def send_welcome(email: str, name: str, role: str | None) -> bool:
 
 
 def invoice_pdf(invoice) -> bytes:
+    return build_invoice_pdf(invoice)
+
+    # Código legado conservado abajo para compatibilidad con instalaciones
+    # antiguas; la factura entregada usa siempre el generador profesional.
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm)
     styles = getSampleStyleSheet()

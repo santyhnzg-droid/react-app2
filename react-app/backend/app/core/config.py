@@ -44,6 +44,13 @@ class Settings:
     SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER).strip()
     SMTP_TLS = os.getenv("SMTP_TLS", "true").lower() in {"1", "true", "yes"}
 
+    BUSINESS_NAME = os.getenv("BUSINESS_NAME", "GameZone")
+    BUSINESS_NIT = os.getenv("BUSINESS_NIT", "NIT no configurado")
+    BUSINESS_ADDRESS = os.getenv("BUSINESS_ADDRESS", "Colombia")
+    BUSINESS_PHONE = os.getenv("BUSINESS_PHONE", "")
+    BUSINESS_EMAIL = os.getenv("BUSINESS_EMAIL", SMTP_FROM)
+    IVA_RATE = os.getenv("IVA_RATE", "19")
+
     GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
     GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b").strip()
 

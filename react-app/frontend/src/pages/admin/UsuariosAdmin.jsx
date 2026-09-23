@@ -71,6 +71,11 @@ export function UsuariosAdmin() {
         rol_id: Number(form.rol_id),
       };
 
+      // La contraseña es opcional al editar. No envíes una cadena vacía.
+      if (editingId && !data.password.trim()) {
+        delete data.password;
+      }
+
       if (editingId) {
         await actualizarUsuario(editingId, data);
         setMensaje("Usuario actualizado.");

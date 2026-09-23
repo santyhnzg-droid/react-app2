@@ -13,7 +13,7 @@ def validate_password_value(
 ) -> str:
     if not re.search(
         r"[A-Z]",
-        value
+        value,
     ):
         raise ValueError(
             "La contraseña debe contener una mayúscula."
@@ -128,7 +128,8 @@ class UserRegister(BaseModel):
         return value
 
     @field_validator(
-        "password"
+        "password",
+        mode="before",
     )
     @classmethod
     def validate_password(
@@ -194,7 +195,8 @@ class UserUpdate(BaseModel):
     )
 
     @field_validator(
-        "password"
+        "password",
+        mode="before",
     )
     @classmethod
     def validate_optional_password(
@@ -202,7 +204,9 @@ class UserUpdate(BaseModel):
         value
     ):
         if value is None:
-            return value
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
 
         return validate_password_value(
             value

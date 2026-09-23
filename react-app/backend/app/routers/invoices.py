@@ -16,6 +16,7 @@ from app.models.invoice import Invoice, InvoiceDetail
 from app.models.sale import Sale
 from app.models.user import User
 from app.schemas.invoice import InvoiceCreate, InvoiceResponse
+from app.services.invoice_pdf import build_invoice_pdf
 
 
 router = APIRouter(prefix="/api/facturas", tags=["Facturas"])
@@ -182,6 +183,10 @@ def invoice_pdf(
     role = current_user.rol.nombre if current_user.rol else None
     if role not in {"Administrador", "Empleado"} and invoice.cliente_id != current_user.id:
         raise HTTPException(status_code=403, detail="No puedes descargar esta factura.")
+
+    pdf_bytes = build_invoice_pdf(invoice)
+    filename = f"factura-{invoice.numero_factura}.pdf"
+    return StreamingResponse(BytesIO(pdf_bytes), media_type="application/pdf", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
 
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm, topMargin=1.5 * cm, bottomMargin=1.5 * cm)

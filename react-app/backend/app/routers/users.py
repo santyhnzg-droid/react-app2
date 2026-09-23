@@ -311,12 +311,6 @@ def create_user(
             detail="Rol inválido.",
         )
 
-    if role.nombre != "Administrador" and _is_last_active_admin(db, usuario):
-        raise HTTPException(
-            status_code=409,
-            detail="Debe existir al menos un administrador activo.",
-        )
-
     usuario = User(
         nombre=data.nombre.strip(),
         apellido=data.apellido.strip(),
@@ -421,6 +415,18 @@ def update_user(
         raise HTTPException(
             status_code=400,
             detail="Rol inválido.",
+        )
+
+    if (
+        usuario.rol is not None
+        and usuario.rol.nombre == "Administrador"
+        and usuario.estado == "activo"
+        and role.nombre != "Administrador"
+        and _is_last_active_admin(db, usuario)
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Debe existir al menos un administrador activo.",
         )
 
     usuario.nombre = (

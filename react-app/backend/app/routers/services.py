@@ -14,6 +14,9 @@ from app.dependencies.auth import (
 )
 
 from app.models.service import Service
+from app.models.invoice import InvoiceDetail
+from app.models.payment import PaymentItem
+from app.models.sale import SaleDetail
 from app.models.user import User
 
 from app.schemas.service import (
@@ -293,12 +296,22 @@ def delete_service(
 
     # Los servicios pueden aparecer en ventas históricas; se conserva el
     # registro y se impide que vuelva a venderse.
-    servicio.estado = "inactivo"
+    tiene_historial = any((
+        db.query(SaleDetail.id).filter(SaleDetail.servicio_id == service_id).first(),
+        db.query(InvoiceDetail.id).filter(InvoiceDetail.servicio_id == service_id).first(),
+        db.query(PaymentItem.id).filter(PaymentItem.servicio_id == service_id).first(),
+    ))
+
+    if tiene_historial:
+        servicio.estado = "inactivo"
+        mensaje = "Servicio desactivado porque tiene historial asociado."
+    else:
+        db.delete(servicio)
+        mensaje = "Servicio eliminado correctamente."
+
     db.commit()
 
     return {
         "ok": True,
-        "message": (
-            "Servicio desactivado correctamente."
-        ),
+        "message": mensaje,
     }

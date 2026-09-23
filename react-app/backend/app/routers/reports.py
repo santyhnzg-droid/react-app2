@@ -1,4 +1,5 @@
 from datetime import date, datetime, time
+from decimal import Decimal
 from io import BytesIO
 
 from fastapi import APIRouter, Depends, Query
@@ -65,6 +66,11 @@ def _report_rows(sales):
     return rows
 
 
+def _total_sales(sales):
+    """Suma cada venta una sola vez, aunque tenga varios artículos."""
+    return sum((sale.total for sale in sales), Decimal("0.00"))
+
+
 def _record_report(db: Session, current_user: User, fecha: date, formato: str, filename: str):
     db.add(GeneratedReport(
         usuario_id=current_user.id,
@@ -85,8 +91,9 @@ def daily_sales_report(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("Empleado", "Administrador")),
 ):
-    rows = _report_rows(_get_daily_sales(db, fecha))
-    total_general = sum((row["total"] for row in rows), 0)
+    sales = _get_daily_sales(db, fecha)
+    rows = _report_rows(sales)
+    total_general = _total_sales(sales)
     return {"fecha": fecha, "ventas": rows, "total_general": total_general}
 
 
@@ -100,15 +107,16 @@ def daily_sales_pdf(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_roles("Empleado", "Administrador")),
 ):
-    rows = _report_rows(_get_daily_sales(db, fecha))
-    total_general = sum((row["total"] for row in rows), 0)
+    sales = _get_daily_sales(db, fecha)
+    rows = _report_rows(sales)
+    total_general = _total_sales(sales)
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1.2 * cm, leftMargin=1.2 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
     styles = getSampleStyleSheet()
     story = [Paragraph("GAMEZONE", styles["Title"]), Paragraph("Reporte diario de ventas", styles["Heading2"]), Paragraph(f"Fecha reporte: {fecha.isoformat()}", styles["Normal"]), Spacer(1, 12)]
-    data = [["Venta", "Cliente", "Tipo", "Producto/Servicio", "Cantidad", "Precio", "Total", "Estado"]]
+    data = [["Venta", "Cliente", "Tipo", "Producto/Servicio", "Cantidad", "Precio", "Subtotal", "Estado"]]
     for row in rows:
-        data.append([row["venta"], row["cliente"] or "Sin cliente", row["tipo"], row["producto_servicio"] or "-", row["cantidad"], f"${row['precio']:,.2f}", f"${row['total']:,.2f}", row["estado"]])
+        data.append([row["venta"], row["cliente"] or "Sin cliente", row["tipo"], row["producto_servicio"] or "-", row["cantidad"], f"${row['precio']:,.2f}", f"${row['subtotal']:,.2f}", row["estado"]])
     if not rows:
         data.append(["-", "Sin ventas", "-", "-", "-", "-", "$0.00", "-"])
     table = Table(data, repeatRows=1, colWidths=[1.3 * cm, 4.2 * cm, 2.2 * cm, 5.2 * cm, 2 * cm, 2.7 * cm, 2.7 * cm, 2.7 * cm])
