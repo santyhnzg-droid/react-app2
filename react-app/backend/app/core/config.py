@@ -67,7 +67,14 @@ class Settings:
                 "DATABASE_URL no está configurada. "
                 "Define una URL PostgreSQL en backend/.env."
             )
-        return self.DATABASE_URL
+        # Render suele entregar postgresql://, pero el proyecto usa Psycopg 3.
+        # Sin este dialecto SQLAlchemy intenta importar el paquete psycopg2.
+        database_url = self.DATABASE_URL
+        if database_url.startswith("postgres://"):
+            database_url = "postgresql+psycopg://" + database_url[len("postgres://"):]
+        elif database_url.startswith("postgresql://"):
+            database_url = "postgresql+psycopg://" + database_url[len("postgresql://"):]
+        return database_url
 
     def validate_for_production(self):
         """Fail fast when a production process still has local defaults."""
@@ -89,7 +96,7 @@ class Settings:
             raise RuntimeError("BACKEND_PUBLIC_URL debe usar HTTPS en producción.")
         if self.INITIAL_ADMIN_PASSWORD in {"AdminGameZone123", "", "CAMBIA_ESTA_CLAVE_EN_TU_ENV_REAL"} or len(self.INITIAL_ADMIN_PASSWORD) < 12:
             raise RuntimeError("INITIAL_ADMIN_PASSWORD debe cambiarse por una contraseña fuerte en producción.")
-        if not self.DATABASE_URL.startswith(("postgresql://", "postgresql+psycopg://")):
+        if not self.DATABASE_URL.startswith(("postgres://", "postgresql://", "postgresql+psycopg://")):
             raise RuntimeError("DATABASE_URL debe apuntar a PostgreSQL en producción.")
         if not self.STRIPE_SECRET_KEY.startswith("sk_") or "..." in self.STRIPE_SECRET_KEY:
             raise RuntimeError("STRIPE_SECRET_KEY no está configurada correctamente en producción.")
