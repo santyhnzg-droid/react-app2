@@ -41,7 +41,7 @@ export function ChatbotWidget() {
   }
 
   return (
-    <div className="fixed bottom-24 right-6 z-50">
+    <div className="gamezone-floating-support fixed bottom-24 right-6 z-50">
       <button
         type="button"
         aria-label="Abrir chatbot de GameZone"

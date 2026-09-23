@@ -1,1 +1,4 @@
 ﻿@import "tailwindcss";
+html[data-cart-open="true"] .gamezone-floating-support {
+  display: none !important;
+}

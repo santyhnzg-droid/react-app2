@@ -1,6 +1,7 @@
 from datetime import date, datetime, time
 from decimal import Decimal
 from io import BytesIO
+from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
@@ -10,10 +11,11 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import cm
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Image, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.database import get_db
+from app.core.config import settings
 from app.dependencies.auth import require_roles
 from app.models.sale import Sale
 from app.models.sale import SaleDetail
@@ -113,7 +115,18 @@ def daily_sales_pdf(
     buffer = BytesIO()
     document = SimpleDocTemplate(buffer, pagesize=landscape(A4), rightMargin=1.2 * cm, leftMargin=1.2 * cm, topMargin=1.2 * cm, bottomMargin=1.2 * cm)
     styles = getSampleStyleSheet()
-    story = [Paragraph("GAMEZONE", styles["Title"]), Paragraph("Reporte diario de ventas", styles["Heading2"]), Paragraph(f"Fecha reporte: {fecha.isoformat()}", styles["Normal"]), Spacer(1, 12)]
+    logo_path = Path(__file__).resolve().parents[2] / "uploads" / "products" / "logo.png"
+    logo = Image(str(logo_path), width=4.2 * cm, height=1.7 * cm) if logo_path.exists() else Paragraph(settings.BUSINESS_NAME, styles["Title"])
+    company = Paragraph(f"<b>{settings.BUSINESS_NAME}</b><br/>NIT: {settings.BUSINESS_NIT}<br/>{settings.BUSINESS_ADDRESS}<br/>{settings.BUSINESS_PHONE} · {settings.BUSINESS_EMAIL}", styles["Normal"])
+    title = Paragraph("<b>REPORTE DIARIO<br/>DE VENTAS</b>", styles["Heading2"])
+    header = Table([[logo, company, title]], colWidths=[6 * cm, 11 * cm, 7.5 * cm])
+    header.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "TOP"), ("LINEBELOW", (0, 0), (-1, -1), 1.2, colors.HexColor("#06B6D4")), ("BOTTOMPADDING", (0, 0), (-1, -1), 12)]))
+    sales_count = len(sales)
+    item_count = sum(row["cantidad"] for row in rows)
+    story = [header, Spacer(1, 12), Paragraph(f"<b>Periodo consultado:</b> {fecha.strftime('%d/%m/%Y')} &nbsp;&nbsp; <b>Generado:</b> {datetime.now():%d/%m/%Y %H:%M}", styles["Normal"]), Spacer(1, 12)]
+    summary = Table([[Paragraph(f"<b>{sales_count}</b><br/><font size=8>VENTAS</font>", styles["Normal"]), Paragraph(f"<b>{item_count}</b><br/><font size=8>UNIDADES</font>", styles["Normal"]), Paragraph(f"<b>${total_general:,.2f}</b><br/><font size=8>INGRESOS {settings.STRIPE_CURRENCY.upper()}</font>", styles["Normal"])]], colWidths=[7.8 * cm, 7.8 * cm, 8.9 * cm])
+    summary.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#E0F2FE")), ("BOX", (0, 0), (-1, -1), .5, colors.HexColor("#67E8F9")), ("INNERGRID", (0, 0), (-1, -1), .25, colors.HexColor("#BAE6FD")), ("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 12), ("TOPPADDING", (0, 0), (-1, -1), 9), ("BOTTOMPADDING", (0, 0), (-1, -1), 9)]))
+    story.extend([summary, Spacer(1, 14), Paragraph("DETALLE DE OPERACIONES", styles["Heading3"]), Spacer(1, 6)])
     data = [["Venta", "Cliente", "Tipo", "Producto/Servicio", "Cantidad", "Precio", "Subtotal", "Estado"]]
     for row in rows:
         data.append([row["venta"], row["cliente"] or "Sin cliente", row["tipo"], row["producto_servicio"] or "-", row["cantidad"], f"${row['precio']:,.2f}", f"${row['subtotal']:,.2f}", row["estado"]])
@@ -121,14 +134,17 @@ def daily_sales_pdf(
         data.append(["-", "Sin ventas", "-", "-", "-", "-", "$0.00", "-"])
     table = Table(data, repeatRows=1, colWidths=[1.3 * cm, 4.2 * cm, 2.2 * cm, 5.2 * cm, 2 * cm, 2.7 * cm, 2.7 * cm, 2.7 * cm])
     table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#111827")),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#0F172A")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("GRID", (0, 0), (-1, -1), 0.25, colors.HexColor("#CBD5E1")),
         ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#F1F5F9")]),
         ("FONTSIZE", (0, 0), (-1, -1), 8),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
         ("ALIGN", (4, 1), (6, -1), "RIGHT"),
     ]))
-    story.extend([table, Spacer(1, 12), Paragraph(f"TOTAL GENERAL: ${total_general:,.2f}", styles["Heading3"])])
+    story.extend([table, Spacer(1, 14), Paragraph(f"TOTAL INGRESOS DEL DÍA: ${total_general:,.2f} {settings.STRIPE_CURRENCY.upper()}", styles["Heading3"]), Spacer(1, 20), Paragraph("Documento generado por GameZone para control administrativo interno.", styles["Normal"])])
     document.build(story)
     buffer.seek(0)
     filename = f"reporte-ventas-{fecha.isoformat()}.pdf"

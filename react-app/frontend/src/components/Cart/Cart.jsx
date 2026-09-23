@@ -6,6 +6,13 @@ export function Cart({ items, total, loading = false, authenticated = true, mess
   const totalUnits = items.reduce((sum, item) => sum + item.cantidad, 0);
 
   useEffect(() => {
+    document.documentElement.dataset.cartOpen = open ? "true" : "false";
+    return () => {
+      document.documentElement.dataset.cartOpen = "false";
+    };
+  }, [open]);
+
+  useEffect(() => {
     if (!open) return undefined;
     const closeWithEscape = (event) => {
       if (event.key === "Escape") setOpen(false);

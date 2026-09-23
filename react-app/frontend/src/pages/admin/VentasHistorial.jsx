@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AdminShell } from "../../components/admin/AdminShell";
 import {
@@ -10,7 +10,14 @@ import {
 } from "../../services/api";
 
 
-const today = new Date().toISOString().slice(0, 10);
+function localDateString(value = new Date()) {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+const today = localDateString();
 
 
 function money(value) {
@@ -37,6 +44,7 @@ export function VentasHistorial() {
   const [servicios, setServicios] = useState([]);
   const [reportDate, setReportDate] = useState(today);
   const [report, setReport] = useState(null);
+  const reportDateInitialized = useRef(false);
   const [loading, setLoading] = useState(true);
   const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState("");
@@ -64,7 +72,12 @@ export function VentasHistorial() {
     setError("");
     try {
       const result = await getVentas(filters);
-      setVentas(Array.isArray(result) ? result : result.ventas || []);
+      const sales = Array.isArray(result) ? result : result.ventas || [];
+      setVentas(sales);
+      if (!reportDateInitialized.current && sales.length && sales[0].fecha) {
+        reportDateInitialized.current = true;
+        setReportDate(localDateString(new Date(sales[0].fecha)));
+      }
     } catch (err) {
       setError(err.message);
     } finally {
