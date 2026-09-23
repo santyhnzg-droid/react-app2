@@ -54,6 +54,10 @@ function App() {
           path="/recover-password"
           element={<RecoverPassword />}
         />
+        <Route
+          path="/recuperar-password"
+          element={<RecoverPassword />}
+        />
 
         <Route
           path="/admin"

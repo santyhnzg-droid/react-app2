@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import Base, SessionLocal, engine, ensure_email_columns
 from app.routers.auth import router as auth_router
 from app.routers.products import router as products_router
 from app.routers.sales import router as sales_router
@@ -34,6 +34,10 @@ UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings.validate_for_production()
+    # Primero garantiza las tablas y columnas nuevas; el seed consulta User.
+    # Si se ejecutara antes, una instalación existente fallaría al arrancar.
+    Base.metadata.create_all(bind=engine)
+    ensure_email_columns()
     seed_initial_data()
     print("[GAMEZONE] Base de datos inicializada.")
     yield

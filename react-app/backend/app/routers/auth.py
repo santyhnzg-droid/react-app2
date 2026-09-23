@@ -15,6 +15,7 @@ from app.core.security import (
 from app.dependencies.auth import get_current_user
 from app.models.password_reset import PasswordResetToken
 from app.models.user import User
+from app.services.email import send_password_changed, send_password_recovery, send_welcome
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -90,6 +91,15 @@ def login(
             "rol": role_name,
         }
     )
+
+    if usuario.first_login_at is None:
+        usuario.first_login_at = utcnow_naive()
+        db.commit()
+        send_welcome(
+            usuario.email,
+            f"{usuario.nombre} {usuario.apellido}".strip(),
+            role_name,
+        )
 
     return {
         "ok": True,
@@ -172,6 +182,12 @@ def recover_password(
     db.add(reset_token)
     db.commit()
 
+    send_password_recovery(
+        usuario.email,
+        f"{usuario.nombre} {usuario.apellido}".strip(),
+        plain_token,
+    )
+
     response = dict(generic_response)
 
     if settings.APP_ENV.lower() == "development":
@@ -231,6 +247,11 @@ def reset_password(
     reset_token.used_at = now
 
     db.commit()
+
+    send_password_changed(
+        usuario.email,
+        f"{usuario.nombre} {usuario.apellido}".strip(),
+    )
 
     return {
         "ok": True,

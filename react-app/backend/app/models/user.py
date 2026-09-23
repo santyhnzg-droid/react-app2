@@ -91,6 +91,8 @@ class User(Base):
         server_default=text("CURRENT_TIMESTAMP"),
     )
 
+    first_login_at = Column(DateTime, nullable=True)
+
     rol = relationship(
         "Role",
         back_populates="usuarios",

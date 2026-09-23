@@ -129,6 +129,14 @@ export function RecoverPassword() {
   ======================================== */
 
   useEffect(() => {
+    const recoveryToken = new URLSearchParams(window.location.search).get("token");
+    if (recoveryToken) {
+      setToken(recoveryToken);
+      setStep("password");
+    }
+  }, []);
+
+  useEffect(() => {
     if (
       step !== "success"
     ) {

@@ -1,4 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
+from datetime import datetime, timezone
 import logging
 from uuid import uuid4
 
@@ -16,10 +17,21 @@ from app.models.sale import Sale, SaleDetail
 from app.models.service import Service
 from app.models.user import User
 from app.schemas.payment import CheckoutCartCreate, CheckoutCreate, CheckoutResponse
+from app.services.email import send_invoice_email
 
 
 router = APIRouter(prefix="/api/pagos", tags=["Pagos"])
 logger = logging.getLogger(__name__)
+
+
+def _send_invoice_if_needed(db: Session, payment: Payment) -> None:
+    """Envía el comprobante una sola vez después de confirmar la transacción."""
+    invoice = payment.venta.factura if payment.venta else None
+    if invoice is None or invoice.email_sent_at is not None or not invoice.cliente_email:
+        return
+    if send_invoice_email(invoice):
+        invoice.email_sent_at = datetime.now(timezone.utc).replace(tzinfo=None)
+        db.commit()
 
 
 def _frontend_origin(request: Request) -> str:
@@ -361,6 +373,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     elif event_type == "payment_intent.payment_failed" and payment.estado == "PENDING":
         payment.estado = "FAILED"
     db.commit()
+    if payment.estado == "APPROVED":
+        _send_invoice_if_needed(db, payment)
     return {"received": True}
 
 
@@ -392,6 +406,8 @@ def get_checkout_status(
             else:
                 _complete_paid_payment(db, payment, session)
             db.commit()
+            if payment.estado == "APPROVED":
+                _send_invoice_if_needed(db, payment)
         except Exception as exc:
             db.rollback()
             logger.exception("No fue posible sincronizar el estado del pago", exc_info=exc)

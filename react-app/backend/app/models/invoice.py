@@ -23,6 +23,7 @@ class Invoice(Base):
     cliente_email = Column(String(120), nullable=True)
     created_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime, nullable=False, server_default=text("CURRENT_TIMESTAMP"), onupdate=text("CURRENT_TIMESTAMP"))
+    email_sent_at = Column(DateTime, nullable=True)
 
     venta = relationship("Sale", back_populates="factura")
     cliente = relationship("User", back_populates="facturas")

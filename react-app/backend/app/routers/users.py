@@ -21,6 +21,7 @@ from app.dependencies.auth import (
 
 from app.models.role import Role
 from app.models.user import User
+from app.services.email import send_password_changed
 
 from app.schemas.user import (
     UserCreateAdmin,
@@ -463,6 +464,12 @@ def update_user(
 
     db.commit()
     db.refresh(usuario)
+
+    if data.password:
+        send_password_changed(
+            usuario.email,
+            f"{usuario.nombre} {usuario.apellido}".strip(),
+        )
 
     return {
         "ok": True,
