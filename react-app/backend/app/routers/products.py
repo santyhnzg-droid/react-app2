@@ -21,6 +21,9 @@ from app.dependencies.auth import (
 
 from app.models.category import Category
 from app.models.product import Product
+from app.models.invoice import InvoiceDetail
+from app.models.payment import Payment, PaymentItem
+from app.models.sale import SaleDetail
 from app.models.user import User
 
 from app.schemas.product import (
@@ -467,12 +470,23 @@ def delete_product(
 
     # Los productos pueden estar referenciados por ventas y facturas.
     # Se desactivan para preservar el histórico y evitar huérfanos.
-    producto.estado = "inactivo"
+    tiene_historial = any((
+        db.query(SaleDetail.id).filter(SaleDetail.producto_id == product_id).first(),
+        db.query(InvoiceDetail.id).filter(InvoiceDetail.producto_id == product_id).first(),
+        db.query(PaymentItem.id).filter(PaymentItem.producto_id == product_id).first(),
+        db.query(Payment.id).filter(Payment.producto_id == product_id).first(),
+    ))
+
+    if tiene_historial:
+        producto.estado = "inactivo"
+        mensaje = "Producto desactivado porque tiene historial asociado."
+    else:
+        db.delete(producto)
+        mensaje = "Producto eliminado correctamente."
+
     db.commit()
 
     return {
         "ok": True,
-        "message": (
-            "Producto desactivado correctamente."
-        ),
+        "message": mensaje,
     }
